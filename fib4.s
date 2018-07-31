@@ -1,4 +1,4 @@
-# framework
+# framework - get first argument from the command line and print to stdout
 .section .text
 .globl _start
 _start:
