@@ -26,6 +26,8 @@ _start:
 # multiply the register power by 10
 # dec ecx
 # loop until the ecx counter has reached 0 and return
+#
+# also need to validate that only want number count up to 10 (32-bit register of max 4,294,967,295 - 2^32)
 long_from_string:
     # TODO: above
     ret
