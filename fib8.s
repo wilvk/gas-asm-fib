@@ -32,12 +32,13 @@ _start:
 print_long:
     mov %esp, %ebp  # copy the stack pointer to ebp for use
     addl $11, %esp   # add 11 extra spaces to the array size as a long is 32 bits and can be a number up to 10 digits long
+    shl $2, %esp  # multiply by 4 as we are using 32 bit longs
     xor %ecx, %ecx   # zero our ecx counter
     mov $10, %ax  # for division, our divisor is stored in ax:dx
 .loop_pl:
     xor %dx, %dx  # clear dx for the dividend
     div %ebx
-    cmp %ax, 0
+    cmp $0, %ax
     je .done_pl
     addb $48, %dl
     movb %dl, (%esp, %ecx, 1)
@@ -97,6 +98,7 @@ fibonacci:
     mov %esp, %ebp  # copy the stack pointer to ebp for use
     mov %eax, %ebx  # make a copy of our fib(n) value for allocating an array on the stack
     addl $2, %ebx   # add 2 extra spaces to the array size in case n=1 or n=1
+    shl $2, %ebx    # multiply by 4 as we are using longs (32 bits)
     subl %ebx, %esp  # add the size of our array to the stack to allocate the required space
     xor %ecx, %ecx  # set our counter to zero
     movl %ecx, (%esp, %ecx, 4)  # initialise our array with 0 for esp[0]
