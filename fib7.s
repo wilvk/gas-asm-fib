@@ -18,7 +18,6 @@ _start:
     call fibonacci
     call exit
 
-
 # if the result from long_from_string is 0, we exit as either the input was invalid or fib(0) is not valid
 check_valid_input:
     cmpl $0, %eax
