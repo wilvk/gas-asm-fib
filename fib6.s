@@ -12,24 +12,41 @@ _start:
     call get_string_length
     #pop %ecx            # restore our string address into ecx
     #call print_string
-    pop %edi
+    pop %edi             # get edi string addr then push it as we are going to clobber it
+    push %edi
     call long_from_string
+    cmpl $0, %eax
+    je exit
+    call fibonacci
     call exit
 
-# using address of string edi and string length ebx, calculate the string as a long
-# call exit if the string is non-numeric
-# use a counter ecx for the byte in the string address to test
-# use a register for the power to multiply by only on 2nd and subsequent bytes
-# use a register to store our result
-# test the byte for numericness (bcd)
-# if numeric, multiply by the register power
-# multiply the register power by 10
-# dec ecx
-# loop until the ecx counter has reached 0 and return
-#
-# also need to validate that only want number count up to 10 (32-bit register of max 4,294,967,295 - 2^32)
+# using address of string edi
+# use eax register to store our result
+# jump to done if not a number
+# if numeric
+# subtract 48 from the byte to convert it to a number
+# multiply the result by 10 and add the number to eax
+# multiply the result register eax by 10
+# loop until the ecx counter has reached a non-numeric (null byte) and return
 long_from_string:
-    # TODO: above
+    xor %eax, %eax # set eax as our result register
+    xor %ecx, %ecx # set ecx(cl) as our temporary byte register
+.top:
+    movb (%edi), %cl
+    inc %edi
+    # check if we have a valid number in edi
+    cmpb $48, %cl  # check if value in ecx is less than ascii '0'. exit if less
+    jl .done
+    cmpb $57, %cl  # check if value in ecx is greater than ascii '9'. exit if greater
+    jg .done
+    sub $48, %cl
+    imul $10, %eax
+    add %ecx, %eax
+    jmp .top
+.done:
+    ret
+
+fibonacci:
     ret
 
 # get length of string pointed to by edi and place result in ebx
