@@ -17,7 +17,7 @@ _start:
     call print_long        # print the last value in the sequence
     call exit              # exit gracefully
 
-# print the long value in register ebx
+# print the long value in register eax
 # process:
 #  check our value is not zero, and handle the special case and print '0' if so
 #  set a counter for the number of digits to 0
@@ -30,21 +30,26 @@ _start:
 # output: no output registers
 
 print_long:
+    push %ebp
     mov %esp, %ebp  # copy the stack pointer to ebp for use
-    addl $11, %esp   # add 11 extra spaces to the array size as a long is 32 bits and can be a number up to 10 digits long
-    shl $2, %esp  # multiply by 4 as we are using 32 bit longs
-    xor %ecx, %ecx   # zero our ecx counter
-    mov $10, %ax  # for division, our divisor is stored in ax:dx
+    add $10, %esp # add 10 to esp to make space for our string
+    mov $10, %ecx   # set our counter to the end of the stack space allocated (higher)
+    mov %ebx, %eax  # our value ebx is placed into eax for division
 .loop_pl:
-    xor %dx, %dx  # clear dx for the dividend
+    xor %edx, %edx  # clear edx for the dividend
+    mov $10, %ebx
     div %ebx
-    cmp $0, %ax
-    je .done_pl
     addb $48, %dl
     movb %dl, (%esp, %ecx, 1)
-    inc %ecx
+    dec %ecx
+    cmp $0, %ax
+    je .done_pl
     jmp .loop_pl
 .done_pl:
+    addl %ecx, %esp     # shift our stack pointer up to the start of the buffer
+    incl %esp
+    sub $10, %ecx       # as we are counting down, we subtract 10 from ecx to give the actual number of digits
+    neg %ecx            # convert to a positive value
     mov %ecx, %edx      # move our count value to edx for the int 80 call
     mov %esp, %ecx      # move our string start address into ecx
     movl $4, %eax       # set eax to 4 for int 80 to write to file
