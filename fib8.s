@@ -37,18 +37,18 @@ print_long:
     mov %ebx, %eax  # our value ebx is placed into eax for division
 .loop_pl:
     xor %edx, %edx  # clear edx for the dividend
-    mov $10, %ebx
-    div %ebx
-    addb $48, %dl
-    movb %dl, (%esp, %ecx, 1)
-    dec %ecx
-    cmp $0, %ax
+    mov $10, %ebx   # ebx is our divisor so we set it to divide by 10
+    div %ebx        # do the division
+    addb $48, %dl   # convert the quotient to ascii
+    movb %dl, (%esp, %ecx, 1)  # place the string byte into memory
+    dec %ecx    # decrease our counter (as we are working backwards through the number)
+    cmp $0, %ax  # exit if the remainder is 0
     je .done_pl
-    jmp .loop_pl
+    jmp .loop_pl  # loop again if necessary
 .done_pl:
     addl %ecx, %esp     # shift our stack pointer up to the start of the buffer
-    incl %esp
-    sub $10, %ecx       # as we are counting down, we subtract 10 from ecx to give the actual number of digits
+    incl %esp           # add 1 to the stack pointer for the actual first string byte
+    sub $10, %ecx      # as we are counting down, we subtract 100 from ecx to give the actual number of digits
     neg %ecx            # convert to a positive value
     mov %ecx, %edx      # move our count value to edx for the int 80 call
     mov %esp, %ecx      # move our string start address into ecx
