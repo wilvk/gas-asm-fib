@@ -1,0 +1,12 @@
+#!/bin/bash
+
+if [ -z "$1" ]; then
+  app_name=fib
+else
+  app_name=$1
+fi
+
+rm $app_name.o $app_name 2> /dev/null
+
+as --32 -gstabs -o $app_name.o $app_name.s
+ld -m elf_i386 -o $app_name $app_name.o
