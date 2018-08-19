@@ -10,8 +10,6 @@ _start:
     movl (%ebp), %edi   # move arg address into esi for scasb
     push %edi           # store the string address as edi gets clobbered
     call get_string_length
-    #pop %ecx            # restore our string address into ecx
-    #call print_string
     pop %edi             # get edi string addr then push it as we are going to clobber it
     push %edi
     call long_from_string

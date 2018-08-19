@@ -7,11 +7,13 @@ _start:
     addl $8, %ebp       # address of first arg in stack
     movl (%ebp), %edi   # move arg address into esi for scasb
     push %edi           # store the string address as edi gets clobbered
+
     movl $50, %ecx      # set ecx counter to a high value
     movl $0, %eax       # zero al search char
     movl %ecx, %ebx     # copy our max counter value to edx
     cld                 # set direction down
     repne scasb         # iterate until we find the al char
+
     movl %ecx, %edx     # move count into edx
     subl %ecx, %ebx     # subtract from our original ecx value
     dec %ebx            # remove null byte at the end of the string from the count
