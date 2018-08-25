@@ -1,4 +1,4 @@
-# framework - refactor into separate functions
+# framework - convert string to number
 .section .text
 .globl _start
 
