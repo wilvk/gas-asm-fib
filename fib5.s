@@ -1,4 +1,4 @@
-# framework - refactor into separate functions
+# framework - convert string to number
 .section .text
 .globl _start
 
@@ -10,9 +10,42 @@ _start:
     movl (%ebp), %edi   # move arg address into esi for scasb
     push %edi           # store the string address as edi gets clobbered
     call get_string_length
-    pop %ecx            # restore our string address into ecx
-    call print_string
+    pop %edi             # get edi string addr then push it as we are going to clobber it
+    push %edi
+    call long_from_string
+    cmpl $0, %eax
+    je exit
+    call fibonacci
     call exit
+
+# using address of string edi
+# use eax register to store our result
+# jump to done if not a number
+# if numeric
+# subtract 48 from the byte to convert it to a number
+# multiply the result by 10 and add the number to eax
+# multiply the result register eax by 10
+# loop until the ecx counter has reached a non-numeric (null byte) and return
+long_from_string:
+    xor %eax, %eax # set eax as our result register
+    xor %ecx, %ecx # set ecx(cl) as our temporary byte register
+.top:
+    movb (%edi), %cl
+    inc %edi
+    # check if we have a valid number in edi
+    cmpb $48, %cl  # check if value in ecx is less than ascii '0'. exit if less
+    jl .done
+    cmpb $57, %cl  # check if value in ecx is greater than ascii '9'. exit if greater
+    jg .done
+    sub $48, %cl
+    imul $10, %eax
+    add %ecx, %eax
+    jmp .top
+.done:
+    ret
+
+fibonacci:
+    ret
 
 # get length of string pointed to by edi and place result in ebx
 get_string_length:
