@@ -14,7 +14,6 @@ _start:
     cld                 # set direction down
     repne scasb         # iterate until we find the al char
 
-    movl %ecx, %edx     # move count into edx
     subl %ecx, %ebx     # subtract from our original ecx value
     dec %ebx            # remove null byte at the end of the string from the count
     pop %ecx            # restore our string address into ecx
