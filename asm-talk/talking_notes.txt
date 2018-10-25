@@ -1,0 +1,230 @@
+asm talk notes:
+
+Hi everyone, thanks for coming. Today I’m going to talk a bit about creating a fibonacci number generator in assembly language.
+
+I’m currently a Systems Engineer in GDE, at least for the next few days but thought i’d share a project I’ve been working on in my spare time.
+
+So who here has done any work in assembly language before? Yes/No? Cool!
+Well, I decided to teach myself Assembly after having not touched it many years ago at University.
+
+The first question that may come to mind it why?
+What would possess you to learn assembly language?
+Everything is in high-level languages these days.
+Like, there must be a really good reason for wanting to learn it, yeah?
+Well as my role as a systems engineer and having been a developer for many years before that, I wanted to know the fundamentals of both how other languages work, improve my troubleshooting skills and improve my security chops.
+Sometimes as a systems engineer you’d come across memory leaks or processes that have core dumped and it would be good to know what has caused a system to get into a certain state.
+As well, in my spare time I do crypto mining and want to know how GPUs work at their core to improve the efficiency of the algorithms running on them. And learning assembly seemed to cover all these bases.
+
+So I got started by reading a few books, defining a small by challenging project, started implementing the project and used online resources to overcome any issues that arose.
+
+So after reading a few books on the topic, the small project of creating a fibonacci generator involved reading input from the command line as a string of numbers, finding the length of the string, converting the string to to a decimal number, generating the fibonacci number from the input number and printing the result to the screen.
+
+But there were a few decisions to be made.
+The first turned out to be the most important as to whether to use the standard glibc linux library.
+The glibc library has a lot of string manipulation functions that make developer’s life easier, especially when dealing with assembly, but I decided to do everything from scratch as it would help me learn the subject domain better.
+The second choice was what variant of assembly language to go with.
+There are a few different flavours out there but I decided on GAS, the GNU Assembler as it is also used by gcc, when compiling C code, is cross-platform and I personally found easier to read than other assembly languages.
+The last choice was whether it would be 32 or 64 bit.
+I went with 32 bit as it was not as steep a learning curve and my two main resources on were in 32 bit as well.
+
+So, who knows what the fibonacci sequence is? Yep, cool.
+
+Ok, so just to recap, the sequence is where for a given number, it’s value is the sum of the two values immediately preceding it in the sequence. It’s usually seeded with the numbers 0, 1, 1 so that the first number of the sequence is 2, 3, 5, and so on.
+
+A sequence would look something like this.
+With positional values like this.
+So our fibonacci generator would take in a positional value and return us the corresponding fibonacci number.
+
+At it’s core, it would look something like this.
+There are many ways to generate fibonacci numbers but I chose this one as it is easy to understand and implement, wasn’t a reentrant function and didn’t use complex data types like 2-dimensional arrays.
+It was also reasonably efficient in time and space complexity.
+
+So we’re almost ready to dive into the implementation, but before I do, there’s some starting knowledge required in order to grasp what’s going on.
+
+Firstly, that GAS assembler uses .s files for source code.
+Usually there are many such files used in a project but for simplicity I’ve limited it to one file per version of the implementation.
+We can see here the .section .text line at the top.
+In a GAS file, there are three sections. .text is for our code, .data is for any initialised variables and .bss is for any uninitialised variables.
+For this project we are only concerned with the .text section as we don’t store any data in our binary or share complex data types between functions.
+Then there’s the 'globl .start' which is similar to node or react where we can export code for use in other files.
+It specifies the label of the code to export and is essentially an entry point into the code from other files when binary object files are linked together.
+Under that is the _start: label that defines an address in the code.
+It is essentially this address that is exposed by the globl line.
+Every linux executable will have a start label to indicate to the launcher where to start executing code.
+On windows the main label is used for the same purpose.
+Following that we have some instructions and a comment in the middle.
+The instructions are called opcodes and can have multiple operands applied to them. Most have one or two operands, a lot less have 3 or 4 operands.
+So, this code effectively does nothing. But more importantly doesn’t crash or segfault the process.
+
+These opcodes and operands are effectively the building blocks for making a process do something in assembly. I’ll just briefly go through what they do here.
+We can see here different instructions and varying numbers of operands.
+
+In order to assemble our source code into an executable, we first use the as assembler which produces an object file. This object file is just a group of binary instructions.
+A linker, ld is then used to resolve any dependencies and convert our object file into an ELF executable.
+This defines the text, data and bss sections, specifies the entrypoint and specifies other information about the executable, like whether it’s 32 or 64 bit, versioning and other metadata.
+
+There are also a few other tools that are useful when building binaries and/or reversing them, such as nm that outputs the sections of the file, objdump and elf dump that can disassemble and give more detailed information. There’s also gdb that can be used for debugging, which I’ll show in a moment, as well as gcc and make.
+
+It’s important to know that at the core of a cpu, there’s the ALU that does the processing, and the registers that store temporary values for very quick access.
+There’s also the memory system that is further away from the cpu and takes longer to access.
+
+While accessing a register may take 1 or 2 cpu clock cycles, accessing memory may take a few hundred clock cycles.
+Hard disk access can take many tens or hundreds of thousands to millions of clock cycles, and so on where the further from the cpu the data is, the higher the latency.
+
+The registers on a 32 bit cpu are categorised into general purpose, index and pointer registers.
+We’ve got EAX, to EDX which are general purpose, and be referenced for smaller operations by for example AH, AL and AX for 8, 8 and 16 bits respectively.
+ESI and EDI are usually used for doing memory operations that require an index into a sequence of bytes.
+And there’s also ESP, EBP and EIP (not pictured) that are used to control program flow.
+
+Just coming back to our trivial example before, I’ll briefly describe what the instructions in it are and how they work.
+The first was nop, which is a no-operation and is more of a filler that anything else.
+It used to be used more on older cpus that didn’t have pipelining but is less useful these days unless patching binaries and needing to fill space.
+
+Probably the most important opcode is the MOV.
+It copies a chunk of data to and from memory and registers and allows placing immediate, or fixed values into registers and memory.
+Most combinations are possible except memory to memory and anything into a fixed value for obvious reasons. (Describe examples).
+
+MOV has different variations based on the size of data to copy, In our 32 bit world where we’re not doing floating point operations, we’re mainly interested in values up to 32 bits.
+
+Another very important instruction is INT.
+It is used for calling from user space into the kernel through what is called a ‘soft interrupt’.
+Most interrupts are hardware based for device drivers, the system clock and other things, but applications use this to request privileged functions of the kernel.
+Things like reading and writing to disk, allocating memory, and so on.
+The 0x80 is important as the linux kernel has an interrupt vector table that looks up what kernel function to call, in conjunction with the registers set, to determine what the kernel should do for the request.
+(Describe example).
+It’s important to note that modern cpus implement the SYSCALL opcode that is different in usage and is quicker, but INT instructions are still valid.
+
+Great, so we’ve got some background info out of the way, we can start on our implementation. 
+
+But before we do, the first thing to do in getting the argument from the command line is to understand the stack, as all command line arguments and environment variables are placed on the stack when our app is launched.
+Each process has it’s own stack space when launched and it’s address space is both virtualised and randomised, but the virtualisation makes it appear to the process that it has full access to all memory on the system.
+We can see in the diagram that the stack is at the top of memory and grows downwards and we have our text, data and bss sections at the bottom, then our heap (which we’re not using).
+
+This table essentially shows that there are pointers to strings in memory that contain values for our command line arguments and for environment variables.
+It doesn’t contain the data at these locations but rather the locations in memory where these strings are stored.
+
+To use this in a trivial example that just prints the first 4 characters of the first command line argument, we could do something like the following. In the first section we’re taking a copy of our stack pointer into ebp adding 8 to it’s value then copying the address pointed to by this new address into ecx.
+Note the brackets around ebp here mean that this is copying from memory and not the actual value of ebp.
+This is the starting point of the command line string argument.
+The second section prepares for an interrupt call, but this time it’s not an exit call, but to tell the kernel to write to file.
+This is determined by eax=4, where for an exit it would be eax=1.
+
+I’ll now quickly show you how this works in the gdb debugger.
+
+gas-asm-fib
+./docker-shell
+gdb --args ./fib2 test
+list
+b 5
+r
+info registers
+stepi up to line 10
+x/5s ($ecx)
+c
+q
+
+Ok, so that’s great if we have a fixed size number from the command line, but it’s not really useful for where we have varying size input from the command line.
+We basically hardcoded it in the last example, so the next step is to determine the size of the string we are working with.
+This part actually wasn’t required for the implementation I later realised but it is useful for highlighting some assembly principles, nonetheless so I’ll still go through it for completeness.
+
+The approach here is to basically get the first command line argument, get the length of the string and print it to standard out.
+
+This is the full implementation here and you’ll notice that in the middle we have some extra code to get the length of the string.
+
+Effectively this chunk of code here.
+You’ll notice some new instructions here like push and pop, cld, subl and repne scasb.
+Push and pop are used to store and retrieve values from our stack.
+Because there are very few registers to use, we do this when we need to reuse a register for another operation and then retrieve the stored value for use at a later time.
+As calls to memory are expensive on clock cycles, we tend to avoid doing it if it can be helped.
+EDI is placed on the stack here as a precaution as repne scasb clobbers it, but we’re not actually using EDI for anything else so isn’t all that necessary.
+The key instruction here is repne scasb which works similar to our INT calls previously and requires registers to be set up before use.
+REPNE SCASB effectively scans a string in memory for a value in our EAX register and decrements ECX for every byte traversed that doesn’t contain it.
+We’re initially setting ECX to a high value, 50 in this case, so that our count doesn’t go negative as the scan will also stop if ECX reaches zero.
+We also take a copy of this high value for calculating the length later.
+
+Our command line arguments are null terminated with a zero byte, and so if we scan for that zero value, while counting down in ECX, we should be able to determine the length of the string. 
+
+So after the scacb loop finishes, we have 50 minus the length of our string plus 1.
+The plus 1 is because the zero byte is included in our string length and is not part of the string length.
+After refactoring this equation, we want to subtract our count ECX from the original value of 50 in EBX, which is what the subl instruction does, then decrease it by 1 for the null byte.
+
+So the next thing that really helps is to be able to refactor this into separate functions using labels.
+This greatly improves readability and flow of the code.
+Labels as mentioned earlier just point to a location in memory and are resolved with our linker.
+There’s two types of labels - standard labels and local labels.
+The only difference is that local labels start with a dot and are local to a file.
+This is useful when using multiple source files so that labels don’t collide.
+
+Labels are used with CALL and RET instructions where a CALL will take a copy of the next instruction from EIP, the instruction pointer, to run onto the stack, change program execution to the address of the label and continue processing.
+RET is the opposite where it grabs the last address on the stack and makes it the address of the next instruction to run in EIP.
+
+As a simple example we can see here of calling a label and returning from it.
+
+In effect, this gives us this implementation here that is much easier to read.
+
+The next thing to do is convert our string into a number, as the input from the command line is a string of characters representing a number, not actually a number.
+
+In pseudo C code, it would look something like this, where we get a pointer to an array of characters, iterate over those numbers to determine it is a valid number, convert the characters to a decimal number at a certain position and repeat the process.
+As the order of processing is from most significant to least significant digit, we multiply the intermediate value by 10 each time to shuffle all our digits across by 1 place.
+When we reach a non-number, we stop the loop and return the result.
+
+The implementation of this here introduces a few more new instructions/opcodes like XOR, INC, CMPB, JL, JG, JL, SUB and IMUL.
+In addition we’re using CL, which is the 8-bit subset of the 32 bit ECX.
+One other thing to notice is the $47 and $58 values which indicate the ASCII values for 0 and 9 respectively.
+
+These are sequential on the ASCII table and so we can use that to exclude non-digit characters from our function.
+
+There’s quite a lot going on here, but the important thing to note is that a loop is formed in our code that is conditional on the string it is reading in memory.
+One other register that I haven’t described up to now is the EFLAGS register that holds a heap of information about the last instruction.
+When a CMP, or comparison operation executes, it sets these flags based on the result.
+The Jump flags can then use these to conditionally jump to a label based on the results of the comparison. There’s a list of them here but there are a lot more, and all have specific criteria depending on the value of the flags set.
+
+At this point I’m hoping you can start to see how these primitives may be able to be used to create higher-level programming languages with structured programming constructs like if/else, for, while and when loops, because in essence, this is how they work ‘under the hood.
+
+Ok, so now we're at the actual implementation of creating a fibonacci number.
+I find it useful to put input, processing and ouptut comments at the top of functions so when coming back to code days, weeks or months later, it's evident exactly what it's doing, what registers or stack state is expected as input, and what registers and stacks hold the output.
+We can see here that the input for this function is EAX that holds the Fibonacci Number to generate for and it returns the result in EBX.
+When dealing with a very terse language like assembly language, it becomes very important to use comments.
+In some other languages, comments are almost an anti-pattern but in assembly its a necessity.
+There are essentially two parts to this function, the first part is setting up the variables and the stack, and the second is the core logic of the implementation.
+
+Coming back to our C implementation, we can see the same thing with variable initialisation and our for loop. EAX would be the variable n and the return value f[n] would be EBX.
+
+This is the variable initialisation here.
+The first t lines preserve our stack pointer with ESP and EBP.
+The next four lines preserve our stack space for the array and the last 5 lines initialise the array with the values 0 and 1 in the first two positions and increment our array counter twice.
+
+When the stack is used in a function, the value of ESP changes.
+As we have called into this function, when we call ret at the end of our function it expects the stack pointer to point to the return address of the code that called it so it can continue processing.
+That's why we push EBP to the stack and take a copy of ESP into EBP.
+We're then free to use esp locally for aour array before restoring ESP from EBP and restoring the value of EBP from the stack.
+It's done this way instead of just pushing ESP onto the stack as it is a lot safer than using the stack to store the stack pointer.
+
+To initialise our array on the stack, we get our array size in EBX and multiply it by 4.
+This is what the SHL opcode does.
+It effectively shifts all the bits in the register to the left by two which is the sme as multiplying by 4.
+The reason it's multiplied by 4 is that we are using the long data type which is 32 bits and each memory address references 1 byte, or 8 bits. 
+The subl instruction then takes the full memory size of the array and subtracts that from the current stack pointer.
+The reason it is a subtract and not an addition is that our stack grows downward and new memory allocation starts from higher addresses to lower addresses.
+
+Before we get to the core implementation of Fibonacci, there's a thing with MOV instructions called indexed memory.
+This effectively allows us to read and write to memory in a more advanced way to access different data types.
+The general rule is that we have our absolute offset, which is usually ESP followed by our index and the size of our index. A second relative offet is also alloed for additional flexibility.
+
+So if we now look at the core of the implementation, we can see two jumps.
+The first jumps out of the loop if our iterator has reached the number of iterations required.
+The second jump is unconditional and just iterates the loop.
+What is happening inside the loop is that we copy the n-1 value into EBX, the n-2 value into EDX, add them together and move the result into the currently indexed memory location.
+We then increase our counter and repeat the loop.
+When we're done, EBX has our final result, we can release the stack memory and return to the main execution of our application.
+
+The next function essentially converts our decimal number back to a string and prints it to the screen.
+
+Here is the code for it.
+
+But for brevity I'll just explain it quickly.
+
+Conclusion.
+
+
+

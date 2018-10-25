@@ -1,0 +1,1437 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <script>
+        var link = document.createElement( 'link' );
+    link.rel = 'stylesheet';
+    link.type = 'text/css';
+    link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+    document.getElementsByTagName( 'head' )[0].appendChild( link );
+  </script>
+  <meta charset="utf-8">
+  <title>Will van Ketwich - Fibonacci Assembly Slides</title>
+  <meta name="description" content="Creating a Fibonacci Generator in Assembly">
+  <meta name="author" content="Will van Ketwich">
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="css/reveal.min.css">
+  <link rel="stylesheet" href="css/default.css" id="theme">
+  <link rel="stylesheet" href="css/overrides.css" id="theme">
+  <!-- For syntax highlighting -->
+  <link rel="stylesheet" href="css/zenburn.css">
+    <!-- If the query includes 'print-pdf', use the PDF print sheet -->
+  <script>
+    document.write( '<link rel="stylesheet" href="css/print/' + ( window.location.search.match( /print-pdf/gi ) ? 'pdf' : 'paper' ) + '.css" type="text/css" media="print">' );
+  </script>
+    <!--[if lt IE 9]>
+    <script src="lib/js/html5shiv.js"></script>
+    <![endif]-->
+  </head>
+
+  <body>
+    <div class="reveal">
+
+<!-- Any section element inside of this container is displayed as a slide -->
+      <div class="slides">
+        <section>
+          <section>
+            <h1>Creating a Fibonacci Generator in Assembly</h1>
+            <a href="https://git.realestate.com.au/will-vanketwich/asm-talk" target="_blank">
+              <img src="img/trump.jpg" style="background: none; border: 0; padding-left: 135px;" />
+            </a>
+            <h3 class="em">Because  ¯\_(ツ)_/¯</h3>
+            <p class="em2" >By Will van Ketwich</p>
+
+            <aside class="notes">
+              Hi, and welcome!
+            </aside>
+          </section>
+
+          <section data-background="#000000">
+            <h2 class="em">@wilvk</h2>
+            <p>
+            Just a dude that does stuff... mostly with computers.
+            </br></br>
+            </p>
+            <img src="img/me.jpeg" id="me" />
+            <p>
+            </br></br>
+            Systems Engineer at REA Group</br>
+            Group Delivery Engineering, Group Technology</br>
+            </p>
+          </section>
+
+      </section>
+
+      <section data-background="#000000">
+        <section>
+          <h2 class="em">Assembly</h2>
+          <p class="fragment zoom-in" data-background="#007777">
+            <img src="img/wat.jpg" />
+          </p>
+          <aside class="notes">
+            Who knows what Assembly is? Who can read Assembly? Who can write Assembly?
+          </aside>
+        </section>
+
+        <section>
+          <h2 class="em">Why???</h2>
+          <div class="fragment fade-in">
+            <h3>Seriously dude, why Assembly?</h3>
+            </br>
+          </div>
+          <div class="fragment fade-in">
+          <p>
+            <table>
+              <tr>
+                <td align="left" style="vertical-align:top;font-size:24px">
+                  <li> The building blocks of all languages
+                  <li> How processes work
+                  <li> How to reverse engineer
+                  <li> How the Linux Kernel works
+                  <li> How device drivers work
+                  <li> Improve troubleshooting skills
+                  <li> Curiosity
+                </td>
+                <td style="text-align: right;">
+                  <img src="img/one-does-not.jpg" id="meme" />
+                </td>
+              </tr>
+            </table>
+          </p>
+          </div>
+
+          <aside class="notes">
+            Once you know the fundamentals, everything else is just an implementation.
+          </aside>
+        </section>
+
+        <section>
+          <h2 class="em">How?</h2>
+            <h3>How to get started?</h3>
+            </br>
+            <table>
+              <tr>
+                <td style="vertical-align:top;font-size:36px;" width="50%">
+            <li> Read a few books
+            <li> Do some examples
+            <li> Define a project
+            <li> Look online for help
+                </td>
+                <td>
+                  <img src="img/asm-sbs.jpg">
+                </td>
+                <td>
+                  <img src="img/pro-asm.jpg">
+                </td>
+              </tr>
+            </table>
+          <aside class="notes">
+            TODO:
+          </aside>
+        </section>
+      </section>
+
+      <section data-background="#000000">
+
+        <section>
+          <h2 class="em">A Small Project</h2>
+          </br>
+          <div align="left" style="line-height: 200%;">
+          <ol>
+            <li> Reading input from the command line
+            <li> Get length of command line argument
+            <li> Converting input to a number
+            <li> Generating the Fibonacci number
+            <li> Printing the output to screen
+          </ol>
+          </br>
+          </br>
+          <pre><code style="font-size: 36px; line-height: normal;">
+            $ ./fib7 46
+            2971215073
+          </code></pre>
+          </div>
+          <aside class="notes">
+          </aside>
+        </section>
+
+        <section>
+          <h2 class="em">Decisions to be made</h2>
+            </br>
+            <div align="left" style="line-height: 200%;">
+              <li> Should standard libraries be used? (glibc)</br>
+              <li> What flavour of assembly to use?</br>NASM, GAS, MASM, YASM?</br>
+              <li> 64 bit or 32 bit?
+            </div>
+          <aside class="notes">
+          </aside>
+        </section>
+
+      </section>
+
+      <section data-background="#000000">
+
+        <section>
+          <h2 class="em">The Fibonacci Sequence</h2>
+            <img src="img/fib-diag.svg" height="200%" width="200%">
+          <aside class="notes">
+          </aside>
+        </section>
+
+        <section>
+          <h2 class="em">The Fibonacci Algorithm</h2>
+            </br>
+            <h3>From Wikipedia:</h3>
+            <div align="left" style="font-size:30px">
+              </br>
+              <p>
+                The sequence F<sub>n</sub> of Fibonacci numbers is defined by the recurrence relation:
+              </p>
+              <p>
+                </br>
+                F<sub>n</sub>=F<sub>n-1</sub> + F<sub>n-2</sub>
+              </p>
+              <p>
+                </br>
+                with seed values:
+              </p>
+              <p>
+                </br>
+                F<sub>1</sub>=1, F<sub>2</sub>=1
+              </p>
+              <p>
+                </br>
+                or:
+              </p>
+              <p>
+                </br>
+                F<sub>0</sub>=0, F<sub>1</sub>=1
+              </p>
+            </div>
+          <aside class="notes">
+            TODO:
+          </aside>
+        </section>
+
+        <section>
+          <h2 class="em">A resultant sequence</h2>
+            </br>
+            </br>
+            </br>
+            <h3>
+            <table>
+              <tr>
+                <td width="200px">Value</td>
+                <td width="30px">0</td>
+                <td width="30px">1</td>
+                <td width="30px">1</td>
+                <td width="30px">2</td>
+                <td width="30px">3</td>
+                <td width="30px">5</td>
+                <td width="30px">8</td>
+                <td width="60px">13</td>
+                <td width="60px">21</td>
+                <td width="60px">34</td>
+                <td width="60px">55</td>
+                <td width="60px">...</td>
+              </tr>
+            </table>
+            <div class="fragment fade-in">
+            <table>
+              <tr>
+                <td width="200px">Position</td>
+                <td width="30px">-</td>
+                <td width="30px">-</td>
+                <td width="30px">1</td>
+                <td width="30px">2</td>
+                <td width="30px">3</td>
+                <td width="30px">4</td>
+                <td width="30px">5</td>
+                <td width="60px">6</td>
+                <td width="60px">7</td>
+                <td width="60px">8</td>
+                <td width="60px">9</td>
+                <td width="60px">...</td>
+              </tr>
+            </table>
+            </div>
+            </h3>
+        </section>
+        <section>
+          <h2 class="em">The Fibonacci Algorithm</h2>
+          <h3>As C code<h3>
+          </br>
+          <pre><code style="font-size: 24px; line-height: normal;">
+int fib(int n)
+{
+  int f[n+2];
+  int i;
+  f[0] = 0;
+  f[1] = 1;
+
+  for (i = 2; i &lt;= n; i++)
+  {
+    f[i] = f[i-1] + f[i-2];
+  }
+  return f[n];
+}
+          </code></pre>
+          <aside class="notes">
+          </aside>
+        </section>
+
+      </section>
+      <section data-background="#000000">
+
+        <section>
+          <h2 class="em">Beginning our implementation</h2>
+          <h3>And some starting knowledge</h3>
+          <img src="img/starting-line.jpg">
+        </section>
+
+        <section>
+          <h2 class="em">GAS Files and Language Syntax</h2>
+          <h3>fib1.s - doing nothing takes something</h3>
+          </br>
+          <pre><code style="font-size: 32px; line-height: normal;">
+.section .text
+.globl _start
+_start:
+    nop
+    # the rest of our program goes here
+    movl $1, %eax
+    movl $0, %ebx
+    int $0x80
+          </code></pre>
+        </section>
+
+        <section>
+          <h2 class="em">The building blocks</h2>
+          <h3>Opcodes and Operands</h3>
+          </br>
+<table style="font-size:30px;">
+<thead bgcolor="#7E2F3A">
+<tr>
+<th>Line</th>
+<th>Opcode</th>
+<th>Operand 1</th>
+<th>Operand 2</th>
+<th>Description</th>
+</tr>
+</thead>
+
+<tbody bgcolor="#322827">
+<tr>
+<td>nop</td>
+<td>nop</td>
+<td>-</td>
+<td>-</td>
+<td>no-operation</td>
+</tr>
+
+<tr>
+<td>movl $1, %eax</td>
+<td>movl</td>
+<td>$1</td>
+<td>%eax</td>
+<td>copy 1 into register eax</td>
+</tr>
+
+<tr>
+<td>movl $0, %ebx</td>
+<td>movl</td>
+<td>$0</td>
+<td>%ebx</td>
+<td>copy 0 into register ebx</td>
+</tr>
+
+<tr>
+<td>int $0x80</td>
+<td>int</td>
+<td>$0x80</td>
+<td>-</td>
+<td>call interrupt number 0x80</td>
+</tr>
+</tbody>
+</table>
+          <aside class="notes">
+            TODO:
+          </aside>
+        </section>
+
+        <section>
+          <h2 class="em">The tools of the trade</h2>
+          <h3>Assemblers and Linkers</h3>
+          <table>
+            <tr>
+              <td style="vertical-align:top;font-size:36px;" width="50%">
+                <img src="img/toolchain.png" style="display: inline-block;width: 100%;border:0px;background:rgba(255,255,255,0);">
+              </td>
+              <td style="vertical-align:middle;">
+                <pre><code style="font-size: 32px; line-height: normal;">
+
+as --32 -gstabs -o fib1.o fib1.s
+
+
+ld -m elf_i386 -o fib1 fib1.o
+
+                </pre></code>
+              </td>
+            </tr>
+           </table>
+
+          <aside class="notes">
+            TODO:
+          </aside>
+        </section>
+
+        <section>
+          <h2 class="em">The tools of the trade</h2>
+          <h3>Object file utilities</h3>
+          <div align="left">
+          <li> nm - lists the symbols from object files
+          <li> objdump - displays more information about object files
+          <li> elfdump - similar to objdump
+          <li> gdb - GNU debugger
+          <li> gcc - GNU compiler collection
+          <li> make - used for build toolchains
+          </div>
+          <aside class="notes">
+            TODO:
+          </aside>
+        </section>
+
+        <section>
+          <h2 class="em">The canvas</h2>
+          <h3>CPU and Registers</h3>
+          <img src="img/cpu-alu.png" style="width:60%;height:60%;display: inline-block;width: 80%;">
+          <div align="left">
+        </section>
+
+        <section>
+          <h2 class="em">The canvas</h2>
+          <h3>Memory Hierarchy</h3>
+          <img src="img/memory-hierarchy.png" style="width:60%;height:60%;display: inline-block;width: 80%;">
+          <div align="left">
+        </section>
+
+        <section>
+          <h2 class="em">The canvas</h2>
+          <h3>Registers</h3>
+          <img src="img/x86-registers.png" style="width:60%;height:60%;display: inline-block;width: 80%;">
+          <div align="left">
+        </section>
+
+        <section>
+          <h2 class="em">NOP</h2>
+          </br>
+          <div align="left" style="font-size:30px">
+            <li> Does nothing functional
+            <li> Takes up a clock cycle
+            <li> Can be used to fill space
+          </div>
+          </br>
+          <pre><code style="font-size: 32px; line-height: normal;">
+nop
+          </code></pre>
+        </section>
+
+        <section>
+          <h2 class="em">MOV</h2>
+          </br>
+          <div align="left" style="line-height: normal;">
+          <li> MOVes (or copies) data from one location to another
+          <li> Can copy to/from memory, register and immediates
+          <li> Cannot copy from memory to memory
+          </br>
+          </br>
+          Some examples:
+          </br>
+          <pre><code style="font-size: 26px; line-height: normal;">
+mov (%ebx), %eax # copy address pointed to by ebx to register eax
+mov %ebx, (%eax) # copy value in ebx to address pointed to by eax
+mov $1, %eax     # place value 1 into register eax
+mov $5, (%eax)   # place value 5 into address pointed to by eax
+mov %ebp, %esp   # copy value in register ebp into register esp
+          </code></pre>
+          </div>
+        </section>
+        <section>
+          <h2 class="em">MOV - Operation Suffixes</h2>
+          <div align="left" style="line-height: normal;">
+            <li> Different variations based on size to copy
+            <li> Used for many instructions (MOVL, PUSHL, POPL, etc.)
+            <li> Floating point versions used with the FPU and SIMD
+              </br>
+              </br>
+              <center>
+<table style="font-size:30px;">
+<thead bgcolor="#7E2F3A">
+<tr>
+<th>Suffix</th>
+<th>Type</th>
+<th>Bits (Integer)</th>
+<th>Bits (Floating Point)</th>
+</tr>
+</thead>
+
+<tbody bgcolor="#322827">
+<tr>
+<td>b</td>
+<td>byte</td>
+<td>8</td>
+<td>-</td>
+</tr>
+<tr>
+<td>s</td>
+<td>short</td>
+<td>16</td>
+<td>32</td>
+</tr>
+<tr>
+<td>w</td>
+<td>word</td>
+<td>16</td>
+<td>-</td>
+</tr>
+<tr>
+<td>l</td>
+<td>long</td>
+<td>32</td>
+<td>64</td>
+</tr>
+<tr>
+<td>q</td>
+<td>quad</td>
+<td>64</td>
+<td>-</td>
+</tr>
+<tr>
+<td>t</td>
+<td>ten bytes</td>
+<td>-</td>
+<td>80</td>
+</tr>
+</tbody>
+</table>
+</center>
+              </br>
+            Some examples:
+          <pre><code style="font-size: 26px; line-height: normal;">
+movb $2, (%ebx)  # moves 0x02 into ebx
+movw $2, (%ebx)  # moves 0x0002 into ebx
+movl $2, (%ebx)  # moves 0x00000002 into ebx
+          </code></pre>
+          </div>
+        </section>
+
+        <section>
+          <h2 class="em">INT</h2>
+          <div align="left" style="line-height: normal;">
+          <li> Interrupts the CPU from scheduled processing
+          <li> Most interrupts are hardware-based
+          <li> Software-based interrupts are called 'soft-interrupts'
+          <li> Requesting actions from User Space in Kernel Space
+            <ul style="margin-left: 100px;">
+              <li> Linux uses INT 0x80
+              <li> MacOS uses INT 0x60
+              <li> Windows uses INT 0x21
+            </ul>
+          <pre><code style="font-size: 32px; line-height: normal;">
+# exit with return code 0
+movl $1, %eax
+movl $0, %ebx
+int 0x80
+          </code></pre>
+          <li> Modern CPUs/OSes use SYSCALL but INT is still valid
+          </div>
+        </section>
+
+    </section>
+
+    <section data-background="#000000">
+
+        <section>
+          <h2 class="em">1. Reading input from the</br>command line</h2>
+          </br>
+          <ol>
+            <li> <font color="red">Reading input from the command line</font>
+            <li> Get length of command line argument
+            <li> Converting input to a number
+            <li> Generating the Fibonacci number
+            <li> Printing the output to screen
+          </ol>
+        </section>
+        <section>
+          <h2 class="em">Memory Layout</h2>
+          <img src="img/mem-layout.jpg" style="display: inline-block;width: 80%;">
+        </section>
+        <section>
+          <h2 class="em">Command Line Arguments in the Stack</h2>
+</br>
+<table style="font-size: 32px; line-height: normal;">
+<thead bgcolor="#7E2F3A">
+<tr>
+<th style="width:200px;">Stack</th>
+<th>Data</th>
+</tr>
+</thead>
+
+<tbody bgcolor="#322827">
+<tr>
+<td>...</td>
+<td></td>
+</tr>
+
+<tr>
+<td>ESP + n+8</td>
+<td>&lt; pointer to second environment variable &gt;</td>
+</tr>
+
+<tr>
+<td>ESP + n+4</td>
+<td>&lt; pointer to first environment variable &gt;</td>
+</tr>
+
+<tr>
+<td>ESP + n</td>
+<td>&lt; NULL for end of command line arguments &gt;</td>
+</tr>
+
+<tr>
+<td>ESP + n-4</td>
+<td>&lt; pointer to last string argument &gt;</td>
+</tr>
+
+<tr>
+<td>...</td>
+<td></td>
+</tr>
+
+<tr>
+<td>ESP + 12</td>
+<td>&lt; pointer to second string argument &gt;</td>
+</tr>
+
+<tr>
+<td>ESP + 8</td>
+<td>&lt; pointer to a string that contains the first argument &gt;</td>
+</tr>
+
+<tr>
+<td>ESP + 4</td>
+<td>&lt; pointer to a string containing the name of the application &gt;</td>
+</tr>
+
+<tr>
+<td>ESP + 0</td>
+<td>&lt; number of arguments on command line &gt;</td>
+</tr>
+
+<tr>
+<td>...</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+        </section>
+
+        <section>
+          <h2 class="em">A Simple Print Utility</h2>
+          <h3>fib2.s</h3>
+          </br>
+          <pre style="height: 500px;"><code style="font-size: 22px; line-height: normal; max-height:500px;height:500px;">
+# stack args example
+.section .text
+.globl _start
+  _start:
+
+    nop
+    movl %esp, %ebp     # take a copy of the stack pointer esp into ebp
+    addl $8, %ebp       # address of first arg in stack
+    movl (%ebp), %ecx   # move the address of the first arg into ecx
+
+    movl $4, %edx       # set the length of our string to 4
+    movl $4, %eax       # indicate to int 0x80 that we are doing a write
+    movl $0, %ebx       # indicate to int 0x80 that we are writing to file descriptor 0
+    int $0x80           # call int 0x80 for write
+
+    movl $1, %eax       # exit gracefully
+    movl $0, %ebx       # with return code 0
+    int $0x80           # call int 0x80 for exit
+          </code></pre>
+        </section>
+        <section>
+          <h2 class="em">Viewing the Stack in GDB</h2>
+          <h3> A demo</h3>
+          </br>
+          <img src="img/demo-gods.jpg">
+          <aside class="notes">
+            gas-asm-fib
+            ./docker-shell
+            gdb --args ./fib2 test
+            list
+            b 5
+            r
+            info registers
+            stepi up to line 10
+            x/5s ($ecx)
+            c
+            q
+          </aside>
+        </section>
+
+
+    </section>
+    <section data-background="#000000">
+
+        <section>
+          <h2 class="em">2. Get length of command line argument</h2>
+          </br>
+          <ol>
+            <li> Reading input from the command line
+            <li> <font color="red">Get length of command line argument</font>
+            <li> Converting input to a number
+            <li> Generating the Fibonacci number
+            <li> Printing the output to screen
+          </ol>
+        </section>
+        <section>
+          <h2 class="em">Approach</h2>
+          </br>
+          <div align="left">
+          <li> Find address of first command line argument string
+          <li> Get length of string
+          <li> Print string to stdout
+          </div>
+        </section>
+        <section style="height: 900px">
+          <h2 class="em">Source</h2>
+          <h3>fib3.s</h3>
+          <pre style="height: 600px;"><code style="font-size: 18px; line-height: normal; max-height:600px;height:600px;">
+# framework - get first argument from the command line and print to stdout
+.section .text
+.globl _start
+_start:
+    nop
+    movl %esp, %ebp     # take a copy of esp to use
+    addl $8, %ebp       # address of first arg in stack
+    movl (%ebp), %edi   # move arg address into esi for scasb
+    push %edi           # store the string address as edi gets clobbered
+
+    movl $50, %ecx      # set ecx counter to a high value
+    movl $0, %eax       # zero al search char
+    movl %ecx, %ebx     # copy our max counter value to edx
+    cld                 # set direction down
+    repne scasb         # iterate until we find the al char
+
+    subl %ecx, %ebx     # subtract from our original ecx value
+    dec %ebx            # remove null byte at the end of the string from the count
+    pop %ecx            # restore our string address into ecx
+    mov %ebx, %edx      # move our count value to edx for the int 80 call
+
+    movl $4, %eax       # set eax to 4 for int 80 to write to file
+    movl $0, %ebx       # set ebx for file to write to as stdoout (file descriptor 0)
+    int $0x80           # make it so
+    movl $1, %eax       # set eax for int 80 for system exit
+    movl $0, %ebx       # set ebx for return code 0
+    int $0x80           # make it so again
+          </code></pre>
+        </section>
+        <section>
+          <h2 class="em">Source</h2>
+          <h3>New Code</h3>
+          </br>
+          <pre><code style="font-size: 22px; line-height: normal;">
+    movl (%ebp), %edi   # move arg address into esi for scasb
+    push %edi           # store the string address as edi gets clobbered
+
+    movl $50, %ecx      # set ecx counter to a high value
+    movl $0, %eax       # zero al search char
+    movl %ecx, %ebx     # copy our max counter value to edx
+    cld                 # set direction down
+    repne scasb         # iterate until we find the al char
+
+    subl %ecx, %ebx     # subtract from our original ecx value
+    dec %ebx            # remove null byte at the end of the string from the count
+    pop %ecx            # restore our string address into ecx
+    mov %ebx, %edx      # move our count value to edx for the int 80 call
+          </code></pre>
+        </section>
+
+        <section>
+          <h2 class="em">repne scasb</h2>
+          <h3>Scanning Strings</h3>
+          <div align="left" style="line-height: normal;">
+          </br>
+          <li> edi - points to address of string to scan
+          <li> al  - stores the byte to scan until
+          <li> ecx - stores the result of the scan count
+          </br>
+          </br>
+          <li> requires registers set up before running (like INT)
+          </br>
+          </br>
+          <li> the cld opcode clears the direction flag
+          <li> each iteration increases edi and decreases ecx
+          </div>
+        </section>
+        <section>
+          <h2 class="em">Some Arithmetic</h2>
+          <div align="left" style="line-height: normal;">
+          </br>
+          <table>
+          <tr>
+            <td>
+          ecx = 50 - ( len(string) + 1 )
+            </td>
+          </tr>
+          <tr>
+            <td>
+            </br>
+          but we want len(string)
+            </br>
+            </td>
+          </tr>
+          <tr>
+            <td>
+            </br>
+          len(string) + 1 =  50 - ecx
+            </br>
+            </td>
+          </tr>
+          <tr>
+            <td>
+          len(string)     = (50 - ecx) - 1
+            </br>
+            </td>
+          </tr>
+          </table>
+          </div>
+          </br>
+          <pre><code style="font-size: 24px; line-height: normal;">
+subl %ecx, %ebx     # subtract from our original ecx value
+dec %ebx            # remove null byte at the end of the string from the count
+          </code></pre>
+
+        </section>
+        <section>
+          <h2 class="em">Labels, CALL, RET and the Stack</h2>
+          <h3>labels</h3>
+          </br>
+          <div align="left" style="line-height: normal;">
+          <li> points to an addresses in memory
+          <li> label addresses resolved with ld
+          </br>
+          </br>
+          </br>
+          Standard labels:
+          <pre style="font-size:30px;"><code>my_function:</pre></code>
+          </br>
+          </br>
+          Local labels:
+          <pre style="font-size:30px;"><code>.my_local_function:</pre></code>
+          </div>
+        </section>
+
+        <section>
+          <h2 class="em">Labels, CALL, RET and the Stack</h2>
+          <h3> CALL and RET</h3>
+          </br>
+          <div align="left" style="line-height: normal;">
+          CALL:
+          </br>
+          <li>places next instruction address on the stack
+          <li>jumps execution to address of label
+          </br>
+          </br>
+          RET:
+          </br>
+          <li> RET jumps execution back to the next address on the stack
+          <li> functions are just a logical placing of CALL and RET
+          <li> no set order to location of labels
+          </div>
+        </section>
+        <section>
+          <h2 class="em">Functions</h2>
+          <h3> A Simple Example </h3>
+          </br>
+          <div align="left" style="line-height:normal;">
+          <pre><code style="font-size: 30px; line-height: normal;">
+          call get_string_length
+          mov %eax, %ebx
+
+          ...
+
+          get_string_length:
+          mov $1, %eax
+          ret
+          </code></pre>
+        </section>
+        <section>
+          <h2 class="em">The implementation</h2>
+          <h3>fib4.s</h3>
+          <pre style="height: 900px;"><code style="font-size: 13px; line-height: normal; max-height:700px;height:700px;">
+# framework - refactor into separate functions
+.section .text
+.globl _start
+
+# entrypoint of application
+_start:
+    nop
+    movl %esp, %ebp     # take a copy of esp to use
+    addl $8, %ebp       # address of first arg in stack
+    movl (%ebp), %edi   # move arg address into esi for scasb
+    push %edi           # store the string address as edi gets clobbered
+    call get_string_length
+    pop %ecx            # restore our string address into ecx
+    call print_string
+    call exit
+
+# get length of string pointed to by edi and place result in ebx
+get_string_length:
+    movl $50, %ecx      # set ecx counter to a high value
+    movl $0, %eax       # zero al search char
+    movl %ecx, %ebx     # copy our max counter value to edx
+    cld                 # set direction down
+    repne scasb         # iterate until we find the al char
+    movl %ecx, %edx     # move count into edx
+    subl %ecx, %ebx     # subtract from our original ecx value
+    dec %ebx            # remove null byte at the end of the string from the count
+    ret
+
+# print the string in ecx to the length of ebx
+print_string:
+    mov %ebx, %edx      # move our count value to edx for the int 80 call
+    movl $4, %eax       # set eax to 4 for int 80 to write to file
+    movl $0, %ebx       # set ebx for file to write to as stdoout (file descriptor 0)
+    int $0x80           # make it so
+    ret
+
+# exit the application
+exit:
+    movl $1, %eax       # set eax for int 80 for system exit
+    movl $0, %ebx       # set ebx for return code 0
+    int $0x80           # make it so again
+          </code></pre>
+        </section>
+
+    </section>
+    <section data-background="#000000">
+
+        <section>
+          <h2 class="em">3. Converting input to a number</h2>
+          </br>
+          <ol>
+            <li> Reading input from the command line
+            <li> Get length of command line argument
+            <li> <font color="red">Converting input to a number</font>
+            <li> Generating the Fibonacci number
+            <li> Printing the output to screen
+          </ol>
+        </section>
+        <section>
+          <h2 class="em">long_from_string</h2>
+          <h3>As (pseudo) C code</h3>
+          </br>
+          <pre style="height: 500px;"><code style="font-size: 24px; line-height: normal; max-height:500px;height:500px;">
+long long_from_string(*char number_string)
+{
+  int i=0;
+  long return_value=0;
+  int temp_value=0;
+  char digit = number_string[i];
+
+  while(digit &gt;= ‘0’ &amp;&amp; digit &lt;= ‘9’)
+  {
+    temp_value = digit - 48;
+    return_value *= 10;
+    return_value += temp_value;
+    digit = number_string[++i];
+  }
+
+  return return_value;
+}
+          </code></pre>
+        </section>
+
+        <section>
+          <h2 class="em">long_from_string</h2>
+          <h3>fib5.s</h3>
+          <pre style="height: 500px;"><code style="font-size: 24px; line-height: normal; max-height:500px;height:500px;">
+long_from_string:
+    xor %eax, %eax # set eax as our result register
+    xor %ecx, %ecx # set ecx(cl) as our temporary byte register
+.top:
+    movb (%edi), %cl
+    inc %edi
+    cmpb $48, %cl  # check if value in ecx is less than ascii '0'. exit if less
+    jl .done
+    cmpb $57, %cl  # check if value in ecx is greater than ascii '9'. exit if greater
+    jg .done
+    sub $48, %cl
+    imul $10, %eax
+    add %ecx, %eax
+    jmp .top
+.done:
+    ret
+          </code></pre>
+        </section>
+
+        <section>
+          <h2 class="em">ASCII</h2>
+          <img src="img/ascii-table.gif">
+        </section>
+
+        <section>
+          <h2 class="em">Compare and Jump Opcodes</h2>
+          </br>
+          <div align="left" style="line-height:normal;">
+          <li> CMP compares two values and sets flags based on the result
+          <li> Flags include carry, zero, overflow/underflow
+          <li> The flags are used to jump to a label/address
+          </br>
+          </br> Many types of jump flags:
+          <li> jg = jump if greater than
+          <li> jl = jump if less than
+          <li> je = jump if equal
+          <li> jge = jump if greater than or equal
+          <li> jle = Jump if less than or equal
+          <li> jmp = jump unconditionally
+          <li> and so on.
+          </div>
+        </section>
+
+        <section>
+          <h2 class="em">Relevance to Structured Programming</h2>
+          </br>
+          <div align="left">
+          <li>Jumps, Compares and Labels
+          <li>basis of Structured Programming Constructs
+          <li>counters and comparisons
+          </br>
+          </br>
+          Can create:
+          </br>
+          </br>
+          <li> Selection - if..else..then
+          <li> Iteration - while, repeat, for, do..while
+          </div>
+        </section>
+
+    </section>
+
+    <section data-background="#000000">
+        <section>
+          <h2 class="em">4. Generating the Fibonacci Number</h2>
+          </br>
+          <ol>
+            <li> Reading input from the command line
+            <li> Get length of command line argument
+            <li> Converting input to a number
+            <li> <font color="red">Generating the Fibonacci number</font>
+            <li> Printing the output to screen
+          </ol>
+        </section>
+
+        <section>
+          <h2 class="em">The Fibonacci Function</h2>
+          <h3>fib6.s</h3>
+          <pre style="height: 620px;"><code style="font-size: 17px; line-height: normal; max-height:620px;height:620px;">
+# input: eax holds our fibonacci n
+# processing: iterate the fibonacci sequence n times
+# output: return our fibonacci result in ebx
+
+fibonacci:
+    pushl %ebp       # preserve ebp
+    mov %esp, %ebp   # copy the stack pointer to ebp for use
+    mov %eax, %ebx   # make a cpoy of our fib(n) value for allocating an array on the stack
+    addl $2, %ebx    # add 2 extra spaces to the array size in case n=1 or n=1
+    subl %ebx, %esp  # add the size of our array to the stack to allocate the required space
+    xor %ecx, %ecx   # set our counter to zero
+    movl %ecx, (%esp, %ecx, 4)  # initialise our array with 0 for esp[0]
+    incl %ecx                   # increase our counter
+    movl %ecx, (%esp, %ecx, 4)  # initialise our array with 1 for esp[1]
+    incl %ecx                   # our counter/iterator should be at 2 now
+
+.fib_loop:
+    cmp %eax, %ecx                # compare our counter (ecx) to n (eax)
+    jge .fib_done                 # if it's greater or equal, we're done
+    movl -4(%esp, %ecx, 4), %ebx  # get the value in the stack at esp-1 from our current stack pointer location
+    movl -8(%esp, %ecx, 4), %edx  # get the value in the stack esp-2 from our current stack pointer location
+    addl %edx, %ebx               # add the values esp-1 and esp-2 together
+    movl %ebx, (%esp, %ecx, 4)    # place the result in the current stack location
+    incl %ecx                     # bump our counter
+    jmp .fib_loop                 # loop again
+
+.fib_done:
+    movl %ebp, %esp               # move our copy of the stack pointer back to esp
+    popl %ebp                     # retrieve the original copy of ebp from the stack
+    ret
+          </code></pre>
+        </section>
+
+        <section>
+          <h2 class="em">Coming back to our C algorithm</h2>
+          </br>
+          <pre><code style="font-size: 24px; line-height: normal;">
+int fib(int n)
+{
+  int f[n+2];
+  int i;
+  f[0] = 0;
+  f[1] = 1;
+
+  for (i = 2; i &lt;= n; i++)
+  {
+    f[i] = f[i-1] + f[i-2];
+  }
+  return f[n];
+}
+          </code></pre>
+
+        </section>
+        <section>
+          <h2 class="em">Creating stack space</h2>
+          <h3>fib6.s</h3>
+          </br>
+          <pre><code>
+fibonacci:
+    pushl %ebp      # preserve ebp
+    mov %esp, %ebp  # copy the stack pointer to ebp for use
+
+    mov %eax, %ebx  # make a cpoy of our fib(n) value for allocating an array on the stack
+    addl $2, %ebx   # add 2 extra spaces to the array size in case n=1 or n=1
+    shl $2, %ebx    # multiply by 4 as we are using longs (32 bits)
+    subl %ebx, %esp # add the size of our array to the stack to allocate the required space
+
+    xor %ecx, %ecx              # set our counter to zero
+    movl %ecx, (%esp, %ecx, 4)  # initialise our array with 0 for esp[0]
+    incl %ecx                   # increase our counter
+    movl %ecx, (%esp, %ecx, 4)  # initialise our array with 1 for esp[1]
+    incl %ecx                   # our counter/iterator should be at 2 now
+        </code></pre>
+        </section>
+
+        <section>
+          <h2 class="em">Saving the stack pointer (esp)</h2>
+          <h3> When modifying ESP in a function</h3>
+          </br>
+          <pre><code>
+fibonacci:
+    pushl %ebp      # preserve ebp as we are going to use it to store our stack pointer for the return call
+    mov %esp, %ebp  # copy the stack pointer to ebp for use
+
+...
+
+.fib_done:
+    movl %ebp, %esp # move our copy of the stack pointer back to esp
+    popl %ebp       # retrieve the original copy of ebp from the stack
+    ret
+          </code></pre>
+        </section>
+
+        <section>
+          <h2 class="em">Variable initialisation</h2>
+          </br>
+          <div align="left">
+          <li> using longs (32 bit values)
+          <li> each long is 4 bytes
+          </br>
+          </br>
+          <li> we shift left twice to multiply by 4
+          <pre><code>
+shl $2, %ebx
+          </code></pre>
+          </br>
+          <li> our stack grows downward, hence subtract for more space
+          </div>
+          <pre><code>
+subl %ebx, %esp
+          </code></pre>
+        </section>
+
+        <section>
+          <h2 class="em">Indexed memory MOV formats</h2>
+          </br>
+          <h4>Absolute indexed memory location</h4>
+          copy ecx into the memory address esp + ( 4 * ecx)
+          <pre><code>
+movl %ecx, (%esp, %ecx, 4)
+          </pre></code>
+          </br>
+          <h4>Absolute and relative indexed memory</h4>
+          copy the memory location at ( esp + ( 4 * ecx) - 4 ) into ebx
+          <pre><code>
+movl -4(%esp, %ecx, 4), %ebx
+          </pre></code>
+          </br>
+          <h4>The general rule is:</h4>
+          <pre><code>
+relative_offset(absolute_offset, index, size)
+          </code></pre>
+        </section>
+
+        <section>
+          <h2 class="em">The core of the Fibonacci implementation</h2>
+          </br>
+          <pre><code>
+.fib_loop:                        # we begin our for loop here
+    cmp %eax, %ecx                # compare our counter (ecx) to n (eax) if it's greater or equal, we're done
+    jge .fib_done
+    movl -4(%esp, %ecx, 4), %ebx  # get the value in the stack at esp-1 from our current stack pointer location
+    movl -8(%esp, %ecx, 4), %edx  # get the value in the stack esp-2 from our current stack pointer location
+    addl %edx, %ebx               # add the values esp-1 and esp-2 together
+    movl %ebx, (%esp, %ecx, 4)    # place the result in the current stack location
+    incl %ecx                     # bump our counter
+    jmp .fib_loop                 # loop again
+          </code></pre>
+        </section>
+
+    </section>
+
+    <section data-background="#000000">
+
+        <section>
+          <h2 class="em">5. Printing the output to screen</h2>
+          </br>
+          <ol>
+            <li> Reading input from the command line
+            <li> Get length of command line argument
+            <li> Converting input to a number
+            <li> Generating the Fibonacci number
+            <li> <font color="red">Printing the output to screen</font>
+          </ol>
+        </section>
+
+        <section>
+          <h2 class="em">print_long</h2>
+          <h3>fib7.s</h3>
+          <pre style="height: 600px;"><code style="font-size: 16px; line-height: normal; max-height:600px;height:600px;">
+print_long:
+    push %ebp
+    mov %esp, %ebp              # copy the stack pointer to ebp for use
+    add $10, %esp               # add 10 to esp to make space for our string
+    mov $10, %ecx               # set our counter to the end of the stack space allocated (higher)
+    mov %ebx, %eax              # our value ebx is placed into eax for division
+.loop_pl:
+    xor %edx, %edx              # clear edx for the dividend
+    mov $10, %ebx               # ebx is our divisor so we set it to divide by 10
+    div %ebx                    # do the division
+    addb $48, %dl               # convert the quotient to ascii
+    movb %dl, (%esp, %ecx, 1)   # place the string byte into memory
+    dec %ecx                    # decrease our counter (as we are working backwards through the number)
+    cmp $0, %ax                 # exit if the remainder is 0
+    je .done_pl
+    jmp .loop_pl                # loop again if necessary
+.done_pl:
+    addl %ecx, %esp             # shift our stack pointer up to the start of the buffer
+    incl %esp                   # add 1 to the stack pointer for the actual first string byte
+    sub $10, %ecx               # as we are counting down, we subtract 10 from ecx to give the actual number of digits
+    neg %ecx                    # convert to a positive value
+    mov %ecx, %edx              # move our count value to edx for the int 80 call
+    mov %esp, %ecx              # move our string start address into ecx
+    movl $4, %eax               # set eax to 4 for int 80 to write to file
+    movl $0, %ebx               # set ebx for file to write to as stdoout (file descriptor 0)
+    int $0x80                   # make it so
+    movl %ebp, %esp             # move our copy of the stack pointer back to esp
+    popl %ebp                   # retrieve the original copy of ebp from the stack
+    ret
+          </code></pre>
+        </section>
+        <section>
+          <h2 class="em">Overview</h2>
+          <h3>From comments (for brevity)</h3>
+          </br>
+          <pre style="font-size:28px;">
+# allocate space on the stack for 10 characters
+
+# start a loop and check if value is zero - jump to done if so
+
+# divide the number by 10 and take the remainder as the first digit
+
+# add 48 to the number to make it an ascii value
+
+# store the byte in the address esp + ecx
+
+# jump to start of loop
+        </pre>
+        <li>Essentially the opposite of long_to_string
+        </section>
+        <section>
+          <h2 class="em">DIV</h2>
+          <h3>division</h3>
+          </br>
+          <div align="left">
+          <li> a / b = y remainder z
+          <li> dividend / divisor = [ quotient, remainder ]
+          <li> eax / ebx = [ eax, edx ]
+          </br>
+          </br>
+          <pre><code>
+...
+
+    mov %ebx, %eax              # our value ebx is placed into eax for division
+.loop_pl:
+    xor %edx, %edx              # clear edx for the dividend
+    mov $10, %ebx               # ebx is our divisor so we set it to divide by 10
+    div %ebx                    # do the division
+    addb $48, %dl               # convert the quotient to ascii
+
+...
+          </code></pre>
+          </div>
+        </section>
+        <section>
+          <h2 class="em">NEG</h2>
+          <h3>multiplying by -1</h3>
+          </br>
+          <pre><code>neg %eax</code></pre>
+          <div align="left">
+          <li>takes two's compliment of number
+          <li> most significant bit indicates sign
+          <li> 1 = negative, 0 = positive
+          <li> number inverted and 1 added to result
+          <li> loose absolute range (eg. 8 bits holds -128 to 127)
+          <li> NEG(-12) = 12
+          <li> 11110100 -&gt; 00001011 + 1 = 00001100
+          </div>
+        </section>
+        <section>
+          <h2 class="em">Printing to stdout</h2>
+          <h3>and shuffling some registers</h3>
+          </br>
+          <pre><code>
+mov %ecx, %edx              # move our count value to edx for the int 80 call
+mov %esp, %ecx              # move our string start address into ecx
+movl $4, %eax               # set eax to 4 for int 80 to write to file
+movl $0, %ebx               # set ebx for file to write to as stdoout (file descriptor 0)
+int $0x80                   # make it so
+          </code></pre>
+        </section>
+
+    </section>
+    <section data-background="#000000">
+      <section>
+        <h2 class="em">Conclusion</h2>
+        <h3>Results and limitations</h3>
+        <div align="left">
+        <li> working program
+          <pre><code>
+_start:
+    nop
+    movl %esp, %ebp              # take a copy of esp to use
+    addl $8, %ebp                # address of first arg in stack
+    movl (%ebp), %edi            # move arg address into esi for scasb
+    call get_string_length       # get the length of the argument string passed in
+    call long_from_string        # get a numeric value from our argument
+    call check_valid_input       # if the result is zero, exit
+    call fibonacci               # run our fibonacci sequence
+    call print_long              # print the last value in the sequence
+    call exit                    # exit gracefully
+          </code></pre>
+        <li> no error checking
+        <li> limited by 32-bit
+        <li> sub-optimal code
+        </div>
+      </section>
+
+      <section>
+        <h2 class="em">Conclusion</h2>
+        <h3>Most of the work doing standard library things</h3>
+        <img src="img/pareto-principle.png" style="background:rgba(255,255,255,1);">
+      </section>
+
+      <section>
+        <h2 class="em">Conclusion</h2>
+        <h3>Insight into language composition</h3>
+        </br>
+        <div align="left">
+        <li> Jumps are GOTOs
+        <li> Frowned upon in higher level languages - Djikstra
+        <li> Fundamental units of operation in any application
+        </div>
+      </section>
+
+      <section>
+        <h2 class="em">Conclusion</h2>
+        <h3>It was fun!</h3>
+        </br>
+        I got some HackerNews rep from a blog post on it!
+        </br>
+        <img src="img/hackernews.png">
+      </section>
+
+      <section>
+        <h2 class="em">Conclusion</h2>
+        <h3>Call to action</h3>
+        </br>
+        <div align="left">
+        <li>Learning continuum
+        <li>Learn as part of something larger 
+        </br>
+        </br>
+        Helps with understanding of:
+        <li>LLVM
+        <li>eBPF
+        <li>GPU Assembly
+        <li>WebAssembly
+        </div>
+      </section>
+
+    </section>
+
+    <section data-transition="linear" data-background-transition="slide" data-background="#333">
+      <section>
+        <h2 class="em">Thank you!</h2>
+        <p class="fragment fade-in">
+          Questions?
+        </p>
+        <p>
+         <a href="https://twitter.com/wilvk" class="em" target="_blank">@wilvk</a>
+        </p>
+
+        <aside class="notes">
+      </section>
+    </section>
+
+
+  </div>
+
+</div>
+
+<script src="js/head.min.js"></script>
+<script src="js/reveal.min.js"></script>
+
+<script>
+
+			// Full list of configuration options available here:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+				progress: true,
+				history: true,
+				center: true,
+				theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
+				transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+				// Optional libraries used to extend on reveal.js
+				dependencies: [
+       { src: 'js/classList.js', condition: function() { return !document.body.classList; } },
+       { src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+       { src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+       { src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+       { src: 'plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+       { src: 'plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }
+					// { src: 'plugin/search/search.js', async: true, condition: function() { return !!document.body.classList; } }
+					// { src: 'plugin/remotes/remotes.js', async: true, condition: function() { return !!document.body.classList; } }
+          ]
+        });
+
+</script>
+
+<div id="footer"></div>
+</body>
+</html>
